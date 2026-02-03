@@ -5,6 +5,7 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.deps import get_db
 from app.models.user import User
 from app.schemas.auth import Token, UserCreate, UserOut
+from app.deps_auth import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -33,3 +34,7 @@ def login(payload: UserCreate, db: Session = Depends(get_db)):
 
     token = create_access_token(subject=str(user.id))
     return Token(access_token=token)
+
+@router.get("/me", response_model=UserOut)
+def me(user: User = Depends(get_current_user)):
+    return user
