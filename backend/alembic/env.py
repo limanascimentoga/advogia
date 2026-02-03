@@ -8,6 +8,8 @@ from app.database import Base
 from app.models.user import User
 from app.models.organization import Organization
 from app.models.membership import Membership
+from app.models.document import Document
+
 
 
 # this is the Alembic Config object, which provides
