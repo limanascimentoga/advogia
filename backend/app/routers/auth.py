@@ -6,6 +6,10 @@ from app.deps import get_db
 from app.models.user import User
 from app.schemas.auth import Token, UserCreate, UserOut
 from app.deps_auth import get_current_user
+from app.models.organization import Organization
+from app.models.membership import Membership
+
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,11 +21,25 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=409, detail="email_ja_cadastrado")
 
-    user = User(email=email, hashed_password=hash_password(payload.password))
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    try:
+        org = Organization(name="Meu escritorio")
+        db.add(org)
+        db.flush()  # garante org.id
+
+        user = User(email=email, hashed_password=hash_password(payload.password))
+        db.add(user)
+        db.flush()  # garante user.id
+
+        membership = Membership(user_id=user.id, organization_id=org.id, role="owner")
+        db.add(membership)
+
+        db.commit()
+        db.refresh(user)
+        return user
+    except Exception:
+        db.rollback()
+        raise
+
 
 
 @router.post("/login", response_model=Token)
